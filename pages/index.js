@@ -2,10 +2,78 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+import NewsCard from '@/components/NewsCard'
+import { useRouter } from 'next/router'
 
+import article from "../utils/db"
+import Header from '@/components/Header'
+import Link from 'next/link'
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
+  const router = useRouter()
+  const [articles, setArticles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('2023-09-24'); // Adjust the start date
+const [endDate, setEndDate] = useState('2023-09-24');
+  const [sortBy, setSortBy] = useState('popularity');
+  const [loading, setLoading] = useState(false);
+  const apiKey = '103602da7f1747f2b90d5b429640d862';
+  // Custom debounce function
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return function () {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(context, args);
+      }, delay);
+    };
+  };
+
+ 
+
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(
+        // "https://newsapi.org/v2/everything",
+        `https://newsapi.org/v2/everything?q=${searchTerm || "apple"}&from=${endDate || `${new Date()}`}&to=${startDate}&sortBy=${sortBy}&apiKey=${apiKey}`,
+    
+      );
+  
+      setArticles(response.data.articles);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+ // Use useEffect with dependencies to trigger fetchData when input values change
+ // Debounce the fetchData function
+ const debouncedFetchData = debounce(fetchData, 500); // 500ms debounce delay
+
+ useEffect(() => {
+  debouncedFetchData();
+}, [searchTerm, startDate, endDate, sortBy]);
+
+// useEffect(() => {
+//   router.push("/home")
+// }, []);
+
+// const router = useRouter()
+const erty = ()=>{
+  // router.push(`/home?${startDate}/?${endDate}`)
+  router.push({
+    pathname:"home",
+    query:{
+      date:startDate,
+      endDate: endDate,
+      sortBy:sortBy
+    },
+  })
+}
   return (
     <>
       <Head>
@@ -15,8 +83,230 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-      <h1>APP INITIALIZE NEWS APP</h1>
+      <div onClick={erty} >Hello</div>
+      <div  style={{ display: loading ? 'none' : 'block' }}>
+{/* <Header /> */}
+      {/* <NewsCard article={article}/> */}
+      {false && <><form>
+        <label>
+          Search Term:
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </label>
+        <label>
+          Start Date:
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </label>
+        <label>
+          End Date:
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </label>
+        <label>
+          Sort By:
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="publishedAt">Published Date</option>
+            <option value="relevancy">Relevancy</option>
+            <option value="popularity">Popularity</option>
+          </select>
+        </label>
+      </form>
+      <ul>
+      <div className='container'>
+      {articles.map((article)=>{
+        return(
+          <>
+          <NewsCard  article={article}  />
+          </>
+        )
+      })}
+      </div>
+      
+        {/* {articles.map((article, index) => (
+        return(
+          <>
+          <NewsCard article={article} key={index} />
+          </>
+        )
+          <li key={index}>
+            <h3>{article.title}</h3>
+            <p>{article.description}</p>
+            <a href={article.url} target="_blank" rel="noopener noreferrer">
+              Read More
+            </a>
+          </li>
+        ))} */}
+      </ul></>}
+    </div>
       </main>
     </>
   )
 }
+
+  // const fetchData = async () => {
+
+  //   try {
+  //     const response = await axios.get(
+  //       // "https://newsapi.org/v2/everything",
+  //       `https://newsapi.org/v2/everything?q=${searchTerm}&from=${endDate}&to=${startDate}&sortBy=${sortBy}&apiKey=${apiKey}`,
+  //       // {
+  //       //   // params: {
+  //       //   //   q: 'apple',
+  //       //   //   from: '2023-09-04',
+  //       //   //   to: '2023-09-04',
+  //       //   //   sortBy: 'popularity',
+  //       //   //   apiKey: '103602da7f1747f2b90d5b429640d862'
+  //       //   // }
+  //       //   params: {
+  //       //     q: searchTerm,    // Search term
+  //       //     from: startDate,  // Start date
+  //       //     to: endDate,      // End date
+  //       //     sortBy: sortBy,   // Sort by
+  //       //     apiKey: apiKey,   // Your API key
+  //       //   },
+  //       // }
+  //     );
+  
+  //     setArticles(response.data.articles);
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
+   // const fetchData = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //     "https://newsapi.org/v2/everything",
+  //     // "https://newsapi.org/v2/everything?q=apple&from=2023-09-04&to=2023-09-04&sortBy=popularity&apiKey=103602da7f1747f2b90d5b429640d862",
+  //       {
+  //         params: {
+  //           q: searchTerm,
+  //           from: startDate,
+  //           to: endDate,
+  //           sortBy: sortBy,
+  //           apiKey: apiKey,
+  //         },
+  //       }
+  //     );
+
+  //     setArticles(response.data.articles);
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
+
+// import { useRouter } from 'next/router';
+// import { useEffect, useState } from 'react';
+// import axios from 'axios';
+// import NewsCard from '@/components/NewsCard';
+// import queryString from 'query-string';
+
+// export default function Home() {
+//   const router = useRouter();
+//   const [articles, setArticles] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const apiKey = '103602da7f1747f2b90d5b429640d862';
+
+//   const fetchArticles = async (queryParams) => {
+//     try {
+//       setLoading(true);
+//       const response = await axios.get(
+//         `https://newsapi.org/v2/everything?apiKey=${apiKey}&${queryString.stringify(queryParams)}`
+//       );
+
+//       setArticles(response.data.articles);
+    
+//     } catch (error) {
+//       console.error('Error fetching data:', error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     const { query } = router;
+//     const queryParams = {
+//       q: query.q || 'apple',
+//       from: query.from || '2023-09-24',
+//       to: query.to || '2023-09-24',
+//       sortBy: query.sortBy || 'popularity',
+//     };
+
+//     fetchArticles(queryParams);
+//   }, [router.query]);
+
+//   // const handleSearch = (e) => {
+//   //   e.preventDefault();
+//   //   const searchTerm = e.target.searchTerm.value;
+//   //   router.push({
+//   //     pathname: '/',
+//   //     query: { ...router.query, q: searchTerm },
+//   //   });
+//   // };
+
+//   const handleSearch = (e) => {
+//     e.preventDefault();
+//     const searchTerm = e.target.searchTerm?.value;
+//     const startDate = e.target.startDate?.value;
+//     const endDate = e.target.endDate?.value;
+//     const sortBy = e.target.sortBy?.value;
+    
+//     router.push({
+//       pathname: '/',
+//       query: { ...router.query, q: searchTerm, from: startDate, to: endDate, sortBy: sortBy },
+//     });
+//   };
+
+//   return (
+//     <>
+//       <div className='container'>
+//       <form onSubmit={handleSearch}>
+//         <label>
+//           Search Term:
+//           <input type="text" name="searchTerm" defaultValue={router.query.q} />
+//         </label>
+//         <label>
+//           Start Date:
+//           <input type="date" name="from" defaultValue={router.query.from} />
+//         </label>
+//         <label>
+//           End Date:
+//           <input type="date" name="to" defaultValue={router.query.to} />
+//         </label>
+//         <label>
+//           Sort By:
+//           <select name="sortBy" defaultValue={router.query.sortBy}>
+//             <option value="publishedAt">Published Date</option>
+//             <option value="relevancy">Relevancy</option>
+//             <option value="popularity">Popularity</option>
+//           </select>
+//         </label>
+//         <button type="submit">Search</button>
+//       </form>
+//       </div>
+// <div className='container'>
+// {loading ? (
+//         <p>Loading...</p>
+//       ) : (
+//        <> {articles.map((article, index) => (
+//             <NewsCard article={article} key={index} />
+//           ))}</>
+         
+       
+//       )}
+// </div>
+      
+//     </>
+//   );
+// }
